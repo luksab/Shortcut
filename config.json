@@ -1,0 +1,23 @@
+{
+    "username": "lukas",
+    "keys-scenes": {
+        "28": "Cam",
+        "103": "4k links",
+        "105": "Links",
+        "106": "Rechts",
+        "108": "4k",
+        "111": "Desk"
+    },
+    "Requests": {
+        "57": "TransitionToProgram"
+    },
+    "ToggleMute": {
+        "40": "LiveCam"
+    },
+    "keys": {
+        "50": "ctrl+m"
+    },
+    "commads": {
+        "119": "xset dpms force off"
+    }
+}
