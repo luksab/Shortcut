@@ -51,6 +51,8 @@ let lastKeys = [];
 child.stderr.setEncoding('utf8');
 child.stderr.on('data', (chunk) => {
     const str = chunk.split("\n")[chunk.split("\n").length - 2];
+    if (!str)
+        return console.log(chunk);
     let keys = str.slice(6).split("+").map((key) => key | 0);
     const key = keys.filter(key => !lastKeys.includes(key) || keys.length == 1)[0];
     lastKeys = [key];
