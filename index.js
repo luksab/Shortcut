@@ -8,13 +8,25 @@ exec("xinput", (error, stdout, stderr) => {
     stdout.split("\n").forEach(line => {
         line = line.split("=");
         if (line[0] === "    ↳   USB Keyboard                          \tid") {
-            exec("xinput set-prop " + line[1].split("\t")[0] + " \"Device Enabled\" 0");
+            exec("xinput set-prop " + line[1].split("\t")[0] + " \"Device Enabled\" 0", (error, stdout, stderr) => {
+                if (error) console.log(error);
+                if (stderr) return console.log(stderr);
+                if (stdout) return console.log(stdout);
+            });
+            console.log("id:", line[1].split("\t")[0]);
         }
     })
 })
 
 
 const OBSws = require("./obsWs");
+const http = require('http');
+const options = {
+    hostname: '192.168.2.192',
+    port: 80,
+    path: '/todos',
+    method: 'GET'
+}
 
 let obsWS = new OBSws("ws://localhost:4444");
 let scenes = [];
@@ -29,9 +41,9 @@ obsWS.on('ConnectionOpened', function () {
     })
     obsWS.send('GetTransitionList').then(function (data) {
         transitions = data.transitions;
-        data.transitions.forEach(function (transition) {
-            console.log(transition);
-        });
+        // data.transitions.forEach(function (transition) {
+        //     console.log(transition);
+        // });
     })
 });
 
@@ -86,6 +98,18 @@ child.stderr.on('data', (chunk) => {
         obsWS.send('ToggleMute', {
             'scene-name': config["ToggleMute"][key]
         });
+    }
+
+    if (key === 30) {
+        http.request(Object.assign(options, { path: '/rgb/255/0/0' })).on("error", console.log).end();
+    }
+
+    if (key === 31) {
+        http.request(Object.assign(options, { path: '/rgb/255/255/0' })).on("error", console.log).end();
+    }
+
+    if (key === 32) {
+        http.request(Object.assign(options, { path: '/rgb/0/255/0' })).on("error", console.log).end();
     }
 
     if (key === 57) {// space

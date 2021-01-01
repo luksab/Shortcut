@@ -6,7 +6,9 @@
         "105": "Links",
         "106": "Rechts",
         "108": "4k",
-        "111": "Desk"
+        "111": "Desk",
+        "34": "Black",
+        "48": "BrB"
     },
     "Requests": {
         "57": "TransitionToProgram"

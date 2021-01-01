@@ -70,7 +70,7 @@ class OBSws {
                 for (var callback of that.callbacks[msg["update-type"]]) {
                     callback(msg);
                 }
-            else if (that.sends[msg["message-id"]]) {
+            if (that.sends[msg["message-id"]]) {
                 that.sends[msg["message-id"]](msg);
                 delete that.sends[msg["message-id"]];
             }
@@ -95,7 +95,7 @@ class OBSws {
             return new Promise(function (resolve, reject) {
                 try {
                     var mid = Math.random().toString(36).substring(7);
-                    console.log("sending", Object.assign({ "request-type": type, "message-id": mid }, options));
+                    // console.log("sending", Object.assign({ "request-type": type, "message-id": mid }, options));
                     that.ws.send(JSON.stringify(Object.assign({ "request-type": type, "message-id": mid }, options)));
                     that.sends[mid] = resolve;
                 } catch (e) {
@@ -106,7 +106,7 @@ class OBSws {
             return new Promise(function (resolve, reject) {
                 that.connect().then(function () {
                     var mid = Math.random().toString(36).substring(7);
-                    console.log("sending", Object.assign({ "request-type": type, "message-id": mid }, options));
+                    // console.log("sending", Object.assign({ "request-type": type, "message-id": mid }, options));
                     that.ws.send(JSON.stringify(Object.assign({ "request-type": type, "message-id": mid }, options)));
                     that.sends[mid] = resolve;
                 });
