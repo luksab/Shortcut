@@ -13,13 +13,24 @@
     "Requests": {
         "57": "TransitionToProgram"
     },
-    "ToggleMute": {
-        "40": "LiveCam"
+    "ToggleHide": {
+        "40": {
+            "scene": "Cam",
+            "source": "HDMI",
+            "sourceEnabled": true
+        }
     },
     "keys": {
         "50": "ctrl+m"
     },
     "commads": {
         "119": "xset dpms force off"
+    },
+    "filters": {
+        "35": {
+            "source": "HDMI",
+            "filter": "greenScreen",
+            "filterEnabled": false
+        }
     }
 }

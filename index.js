@@ -13,7 +13,7 @@ exec("xinput", (error, stdout, stderr) => {
                 if (stderr) return console.log(stderr);
                 if (stdout) return console.log(stdout);
             });
-            console.log("id:", line[1].split("\t")[0]);
+            //console.log("id:", line[1].split("\t")[0]);
         }
     })
 })
@@ -28,7 +28,7 @@ const options = {
     method: 'GET'
 }
 
-let obsWS = new OBSws("ws://localhost:4444");
+let obsWS = new OBSws("ws://localhost:4444", true);
 let scenes = [];
 let transitions = [];
 let studioMode = true;
@@ -51,7 +51,7 @@ const { spawn } = require('child_process');
 const child = spawn('actkbd', ['-s', '-d', '/dev/input/by-id/usb-_USB_Keyboard-event-kbd']);
 
 const config = require("./config.json");
-const configProps = ["username", "keys-scenes", "Requests", "ToggleMute", "keys", "commads"];
+const configProps = ["username", "keys-scenes", "Requests", "ToggleHide", "keys", "commads", "filters"];
 for (const prop of configProps) {
     if (!config[prop]) {
         return console.log("invalid json:", prop, "missing");
@@ -94,9 +94,21 @@ child.stderr.on('data', (chunk) => {
         obsWS.send(config["Requests"][key]);
     }
 
-    if (key in config["ToggleMute"]) {
-        obsWS.send('ToggleMute', {
-            'scene-name': config["ToggleMute"][key]
+    if (key in config["ToggleHide"]) {
+        config["ToggleHide"][key]["sourceEnabled"] = !config["ToggleHide"][key]["sourceEnabled"];
+        obsWS.send('SetSceneItemRender', {
+            'scene-name': config["ToggleHide"][key]["scene"],
+            'source': config["ToggleHide"][key]["source"],
+            'render': config["ToggleHide"][key]["sourceEnabled"]
+        });
+    }
+
+    if (key in config["filters"]) {
+        config["filters"][key]["filterEnabled"] = !config["filters"][key]["filterEnabled"];
+        obsWS.send('SetSourceFilterVisibility', {
+            'sourceName': config["filters"][key]["source"],
+            'filterName': config["filters"][key]["filter"],
+            'filterEnabled': config["filters"][key]["filterEnabled"]
         });
     }
 
