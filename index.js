@@ -22,7 +22,7 @@ exec("xinput", (error, stdout, stderr) => {
 const OBSws = require("./obsWs");
 const http = require('http');
 const options = {
-    hostname: '192.168.2.192',
+    hostname: '192.168.178.51',
     port: 80,
     path: '/todos',
     method: 'GET'
