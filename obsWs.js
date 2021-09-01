@@ -13,11 +13,10 @@ class OBSws {
     }
     connect() {
         this.ws = new WebSocket(this.address);
-        var that = this;
-        this.ws.onopen = function () {
-            if (that.resolve)
-                that.resolve();
-            that.send("GetAuthRequired").then(function (msg) {
+        this.ws.onopen = () => {
+            if (this.resolve)
+                this.resolve();
+            this.send("GetAuthRequired").then(msg => {
                 if (msg.authRequired) {
                     var hash;
                     if (localStorage.getItem("hash") == null) {
@@ -28,58 +27,58 @@ class OBSws {
                     }
                     var auth = b64_sha256(hash + msg.challenge)
 
-                    return that.send('Authenticate', { auth: auth }).then(function (msg) {
+                    return this.send('Authenticate', { auth: auth }).then(msg => {
                         if (msg.status !== "ok")
-                            return that.connect();
-                        that.send("SetHeartbeat", { "enable": false });
-                        that.send("GetSceneList").then(function (msg) {
-                            that.currentScene = msg["current-scene"];
-                            that.sceneList = msg["scenes"]
+                            return this.connect();
+                        this.send("SetHeartbeat", { "enable": false });
+                        this.send("GetSceneList").then(msg => {
+                            this.currentScene = msg["current-scene"];
+                            this.sceneList = msg["scenes"]
                         });
-                        if (that.callbacks["ConnectionOpened"])
-                            for (var callback of that.callbacks["ConnectionOpened"]) {
+                        if (this.callbacks["ConnectionOpened"])
+                            for (var callback of this.callbacks["ConnectionOpened"]) {
                                 callback();
                             }
                     });
                 } else {
-                    if (that.callbacks["ConnectionOpened"])
-                        for (var callback of that.callbacks["ConnectionOpened"]) {
+                    if (this.callbacks["ConnectionOpened"])
+                        for (var callback of this.callbacks["ConnectionOpened"]) {
                             callback();
                         }
                 }
             })
         }
 
-        this.ws.onclose = function (e) {
+        this.ws.onclose = e => {
             if (!e.reason) {
                 console.log('Socket is closed. Reconnect will be attempted in 5 seconds.', e.reason);
-                setTimeout(function () {
-                    that.connect();
+                setTimeout(() => {
+                    this.connect();
                 }, 5000);
             }
         };
 
-        this.ws.onerror = function (err) {
+        this.ws.onerror = err => {
             console.error('Socket encountered error: ', err.message, 'Closing socket');
-            that.ws.close();
+            this.ws.close();
         };
 
-        this.ws.onmessage = function (message) {
+        this.ws.onmessage = message => {
             var msg = JSON.parse(message.data);
             //console.log(msg)
-            if (that.callbacks[msg["update-type"]])
-                for (var callback of that.callbacks[msg["update-type"]]) {
+            if (this.callbacks[msg["update-type"]])
+                for (var callback of this.callbacks[msg["update-type"]]) {
                     callback(msg);
                 }
-            if (that.sends[msg["message-id"]]) {
-                that.sends[msg["message-id"]](msg);
-                delete that.sends[msg["message-id"]];
+            if (this.sends[msg["message-id"]]) {
+                this.sends[msg["message-id"]](msg);
+                delete this.sends[msg["message-id"]];
             }
         };
 
-        return new Promise(function (resolve, reject) {
+        return new Promise((resolve, reject) => {
             try {
-                that.resolve = resolve;
+                this.resolve = resolve;
             } catch (e) {
                 reject(e);
             }
@@ -91,27 +90,26 @@ class OBSws {
         this.callbacks[type].push(callback);
     }
     send(type, options) {
-        var that = this;
         if (this.ws.readyState === WebSocket.OPEN)
-            return new Promise(function (resolve, reject) {
+            return new Promise((resolve, reject) => {
                 try {
                     var mid = Math.random().toString(36).substring(7);
-                    if (that.logging)
+                    if (this.logging)
                         console.log("sending", Object.assign({ "request-type": type, "message-id": mid }, options));
-                    that.ws.send(JSON.stringify(Object.assign({ "request-type": type, "message-id": mid }, options)));
-                    that.sends[mid] = resolve;
+                    this.ws.send(JSON.stringify(Object.assign({ "request-type": type, "message-id": mid }, options)));
+                    this.sends[mid] = resolve;
                 } catch (e) {
                     reject(e);
                 }
             })
         else
-            return new Promise(function (resolve, reject) {
-                that.connect().then(function () {
+            return new Promise((resolve, reject) => {
+                this.connect().then(() => {
                     var mid = Math.random().toString(36).substring(7);
-                    if (that.logging)
+                    if (this.logging)
                         console.log("sending", Object.assign({ "request-type": type, "message-id": mid }, options));
-                    that.ws.send(JSON.stringify(Object.assign({ "request-type": type, "message-id": mid }, options)));
-                    that.sends[mid] = resolve;
+                    this.ws.send(JSON.stringify(Object.assign({ "request-type": type, "message-id": mid }, options)));
+                    this.sends[mid] = resolve;
                 });
             })
     }

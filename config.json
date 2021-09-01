@@ -1,7 +1,7 @@
 {
     "username": "lukas",
     "keys-scenes": {
-        "28": "Cam",
+        "28": "CamWithOverlays",
         "103": "4k links",
         "105": "Links",
         "106": "Rechts",
@@ -14,6 +14,16 @@
         "57": "TransitionToProgram"
     },
     "ToggleHide": {
+        "24": {
+            "scene": "Cam",
+            "source": "LiveCam",
+            "sourceEnabled": true
+        },
+        "25": {
+            "scene": "CamWithOverlays",
+            "source": "3DPrint",
+            "sourceEnabled": true
+        },
         "40": {
             "scene": "Cam",
             "source": "HDMI",
@@ -21,7 +31,7 @@
         }
     },
     "keys": {
-        "50": "ctrl+m"
+        "50": "ctrl+Shift+m"
     },
     "commads": {
         "119": "xset dpms force off"
@@ -30,6 +40,11 @@
         "35": {
             "source": "HDMI",
             "filter": "greenScreen",
+            "filterEnabled": false
+        },
+        "36": {
+            "source": "HDMI",
+            "filter": "Freeze",
             "filterEnabled": false
         }
     }
