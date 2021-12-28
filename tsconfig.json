@@ -5,7 +5,8 @@
     "removeComments": true,
     "preserveConstEnums": true,
     "sourceMap": true,
-    "strict": false,
+    "strict": true,
+    "outDir": "./dist",
     "target": "ES2019"
   },
   "extends": "@tsconfig/node16/tsconfig.json",
