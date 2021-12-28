@@ -215,18 +215,10 @@ class Stream {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const deck = new Stream();
 
 console.log("done");
-
-import split = require("split");
-process.stdin.pipe(split()).on("data", processLine);
-
-function processLine() {
-    console.log("exit!");
-    deck.deck.clearAllKeys();
-    process.exit();
-}
 
 // process.on("exit", function (code) {
 //   deck.deck.clearAllKeys();
