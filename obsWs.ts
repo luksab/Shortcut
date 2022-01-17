@@ -75,6 +75,9 @@ export class OBSws {
             }
         });
     }
+    clearCallbacks() {
+        this.callbacks = {};
+    }
     on(type: string | number, callback: any) {
         if (this.callbacks[type] == null) this.callbacks[type] = [];
         this.callbacks[type].push(callback);

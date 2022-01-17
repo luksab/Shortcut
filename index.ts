@@ -29,6 +29,7 @@ obsWS.on("ConnectionOpened", function () {
             //     console.log(transition);
             // });
         });
+    const deck = new Stream();
 });
 
 obsWS.on(
@@ -62,7 +63,8 @@ class Stream {
         });
     }
 
-    applyConfig(config_path: string) {
+    async applyConfig(config_path: string) {
+        obsWS.clearCallbacks();
         console.log(config_path);
         this.deck.clearAllKeys();
         this.config = JSON.parse(
@@ -71,7 +73,7 @@ class Stream {
         for (const button in this.config) {
             if (Object.hasOwnProperty.call(this.config, button)) {
                 const button_config = this.config[button];
-                console.log(button_config);
+                // console.log(button_config);
 
                 if (Object.hasOwnProperty.call(button_config, "image")) {
                     this.setImage(
@@ -79,8 +81,19 @@ class Stream {
                         button_config["image"],
                         config_path,
                     );
+                } else if (
+                    Object.hasOwnProperty.call(button_config, "text") &&
+                    Object.hasOwnProperty.call(button_config, "color")
+                ) {
+                    console.log("first");
+                    await this.setText(
+                        parseInt(button),
+                        button_config["text"],
+                        button_config["text-size"] || 30,
+                        button_config["color"],
+                    );
                 } else if (Object.hasOwnProperty.call(button_config, "text")) {
-                    this.setText(
+                    await this.setText(
                         parseInt(button),
                         button_config["text"],
                         button_config["text-size"] || 30,
@@ -93,30 +106,121 @@ class Stream {
                         button_config["color"][2],
                     );
                 }
+
+                if (Object.hasOwnProperty.call(button_config, "color-states")) {
+                    const color_states = button_config["color-states"];
+                    for (const state_name in color_states) {
+                        const state = color_states[state_name];
+                        obsWS.send(state_name).then((data) => {
+                            for (const property in state) {
+                                if (
+                                    Object.hasOwnProperty.call(
+                                        state,
+                                        property,
+                                    ) &&
+                                    Object.hasOwnProperty.call(data, property)
+                                ) {
+                                    for (const value in state[property]) {
+                                        if (
+                                            Object.hasOwnProperty.call(
+                                                state[property],
+                                                value,
+                                            ) &&
+                                            value == String(data[property])
+                                        ) {
+                                            if (
+                                                Object.hasOwnProperty.call(
+                                                    button_config,
+                                                    "text",
+                                                )
+                                            ) {
+                                                this.setText(
+                                                    parseInt(button),
+                                                    button_config["text"],
+                                                    button_config[
+                                                        "text-size"
+                                                    ] || 30,
+                                                    state[property][value],
+                                                );
+                                            } else {
+                                                this.setColor(
+                                                    parseInt(button),
+                                                    state[property][value][0],
+                                                    state[property][value][1],
+                                                    state[property][value][2],
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+
+                if (
+                    Object.hasOwnProperty.call(button_config, "color-events") &&
+                    Object.hasOwnProperty.call(button_config, "text")
+                ) {
+                    const color_events = button_config["color-events"];
+                    for (const event in color_events) {
+                        const color: [number, number, number] =
+                            color_events[event];
+                        obsWS.on(event, () => {
+                            console.log(`event ${event} came in`);
+                            this.setText(
+                                parseInt(button),
+                                button_config["text"],
+                                button_config["text-size"] || 30,
+                                [color[0], color[1], color[2]],
+                            );
+                        });
+                    }
+                } else if (
+                    Object.hasOwnProperty.call(button_config, "color-events")
+                ) {
+                    const color_events = button_config["color-events"];
+                    for (const event in color_events) {
+                        const color = color_events[event];
+                        obsWS.on(event, () => {
+                            this.setColor(
+                                parseInt(button),
+                                color[0],
+                                color[1],
+                                color[2],
+                            );
+                        });
+                    }
+                }
             }
         }
     }
 
-    setImage(index: number, image: string, basedir: string) {
-        sharp(path.resolve(basedir, image))
+    async setImage(index: number, image: string, basedir: string) {
+        console.log(
+            `Setting image ${path.resolve(basedir, image)} to ${index}`,
+        );
+        const buffer = await sharp(path.resolve(basedir, image))
             .flatten() // Eliminate alpha channel, if any.
             .resize(this.deck.ICON_SIZE, this.deck.ICON_SIZE) // Scale up/down to the right size, cropping if necessary.
             .raw() // Give us uncompressed RGB.
-            .toBuffer()
-            .then((buffer) => {
-                this.deck.fillImage(index, buffer);
-            })
-            ["catch"]((err) => {
-                console.error(err);
-            });
+            .toBuffer();
+        this.deck.fillImage(index, buffer);
     }
 
-    setText(index: number, text: string, size: number) {
-        console.log("size:", size);
-        sharp(
+    async setText(
+        index: number,
+        text: string,
+        size: number,
+        color: string | [number, number, number] = "black",
+    ) {
+        if (typeof color === "object") {
+            color = `rgb(${color[0]},${color[1]},${color[2]})`;
+        }
+        const buffer = await sharp(
             Buffer.from(
                 `<svg>
-                  <rect x="0" y="0" width="64" height="64" />
+                  <rect x="0" y="0" width="64" height="64" fill="${color}" />
                   <text x="5" y="${25 + size / 2}" font-size="${size}"` +
                     ` font-weight="bold" font-family="mono" fill="#fff">` +
                     text +
@@ -127,13 +231,8 @@ class Stream {
             .flatten() // Eliminate alpha channel, if any.
             .resize(this.deck.ICON_SIZE, this.deck.ICON_SIZE) // Scale up/down to the right size, cropping if necessary.
             .raw() // Give us uncompressed RGB.
-            .toBuffer()
-            .then((buffer) => {
-                this.deck.fillImage(index, buffer);
-            })
-            ["catch"]((err) => {
-                console.error(err);
-            });
+            .toBuffer();
+        this.deck.fillImage(index, buffer);
     }
 
     handleDown(button: number, config: { [x: string]: any }) {
@@ -161,7 +260,7 @@ class Stream {
             } else if (Object.hasOwnProperty.call(button_config, "key")) {
                 const key = button_config["key"];
                 console.log("typing", key);
-                exec("export DISPLAY=':0.0';xdotool key \"" + key + "\"");
+                exec("export DISPLAY=':0.0';xdotool key \"" + key + '"');
             } else if (Object.hasOwnProperty.call(button_config, "scene")) {
                 const scene = button_config["scene"];
                 if (studioMode)
@@ -197,6 +296,9 @@ class Stream {
                 Object.hasOwnProperty.call(button_config, "transition")
             ) {
                 obsWS.send("TransitionToProgram");
+            } else if (Object.hasOwnProperty.call(button_config, "send")) {
+                const message = button_config["send"];
+                obsWS.send(message.message, message.args);
             } else if (Object.hasOwnProperty.call(button_config, "setColor")) {
                 const color = button_config["setColor"];
                 http.request(
@@ -216,7 +318,6 @@ class Stream {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const deck = new Stream();
 
 console.log("done");
 
